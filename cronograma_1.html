@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Cronograma — Semestre</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f5f2eb;
+    color: #1a1a1a;
+    padding: 32px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 24px;
+    letter-spacing: 0.03em;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+
+  .legend-hint {
+    font-size: 11px;
+    color: #999;
+    margin-left: 8px;
+  }
+
+  .pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .calc  { background: #e8e5ff; color: #3b2fa0; }
+  .ux    { background: #d4f0e5; color: #0d6647; }
+  .inf   { background: #fde8c8; color: #7a4a0a; }
+  .veri  { background: #fcddd5; color: #7a2810; }
+  .sisop { background: #d3e8fa; color: #0a3d6e; }
+  .prob  { background: #dff0ce; color: #2a5a0d; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .month-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    break-inside: avoid;
+  }
+
+  .month-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #1a1a1a;
+    border-bottom: 1.5px solid #1a1a1a;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  .event {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    user-select: none;
+  }
+
+  .event:hover { opacity: 0.75; }
+
+  .event.conflict { background: #fff5e0; }
+
+  .event.done { opacity: 0.35; }
+  .event.done .event-label { text-decoration: line-through; color: #999; }
+  .event.done .conflict-badge { opacity: 0.3; }
+
+  .check-icon {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border-radius: 50%;
+    border: 1.5px solid #ccc;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .event.done .check-icon {
+    background: #22c55e;
+    border-color: #22c55e;
+  }
+
+  .event.done .check-icon::after {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 3.5px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  .event-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    min-width: 38px;
+    padding-top: 2px;
+    letter-spacing: 0.03em;
+  }
+
+  .event-label {
+    font-size: 12px;
+    color: #1a1a1a;
+    line-height: 1.4;
+  }
+
+  .conflict-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: #f59e0b;
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: auto;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .warn-box {
+    background: #fff8ed;
+    border: 1.5px solid #f59e0b;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: #7a4a0a;
+    line-height: 1.6;
+  }
+
+  .warn-box strong { font-weight: 600; }
+
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-label { font-size: 11px; color: #999; margin-bottom: 6px; }
+  .progress-bar-bg { background: #e8e6df; border-radius: 100px; height: 6px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: #22c55e; border-radius: 100px; transition: width 0.3s ease; width: 0%; }
+
+  @media print {
+    body { background: #fff; padding: 16px; }
+    .month-card { border: 1px solid #ddd; }
+    .warn-box { border-color: #ccc; background: #fffbf0; }
+    .event { cursor: default; }
+    .legend-hint, .progress-wrap { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Cronograma do Semestre</h1>
+<p class="subtitle">Verificação e Validação · Cálculo · UX/UI · Infraestrutura · SisOp · Prob &amp; Estat</p>
+
+<div class="legend">
+  <span class="pill calc">Cálculo</span>
+  <span class="pill ux">UX/UI</span>
+  <span class="pill inf">Infra</span>
+  <span class="pill veri">VeriVal</span>
+  <span class="pill sisop">SisOp</span>
+  <span class="pill prob">Prob/Estat</span>
+  <span class="legend-hint">· clique num item para marcar como concluído</span>
+</div>
+
+<div class="progress-wrap">
+  <p class="progress-label" id="progress-label">0 de 36 concluídos</p>
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+</div>
+
+<div class="warn-box">
+  ⚠ <strong>Conflitos críticos:</strong>
+  22/04 SisOp T1 + Prob T2 &nbsp;·&nbsp;
+  29/04 SisOp P1 + Prob P1 &nbsp;·&nbsp;
+  01/07 Infra T3 + SisOp P2 &nbsp;·&nbsp;
+  07/07 Cálculo PS + VeriVal PS &nbsp;·&nbsp;
+  08/07 Infra PS + SisOp PS &nbsp;·&nbsp;
+  <strong>13/07 Infra G2 + SisOp G2 + Prob G2</strong>
+</div>
+
+<div class="grid">
+
+  <!-- ABRIL -->
+  <div class="month-card">
+    <div class="month-title">Abril</div>
+    <div class="event" data-id="calc-t1"><div class="check-icon"></div><span class="event-date">09/04</span><div><span class="pill calc">Cálculo</span><div class="event-label">T1</div></div></div>
+    <div class="event" data-id="ux-t11"><div class="check-icon"></div><span class="event-date">09/04</span><div><span class="pill ux">UX/UI</span><div class="event-label">Entrega T1.1</div></div></div>
+    <div class="event" data-id="inf-t1"><div class="check-icon"></div><span class="event-date">13/04</span><div><span class="pill inf">Infra</span><div class="event-label">Entrega e Apres. T1</div></div></div>
+    <div class="event" data-id="calc-p1"><div class="check-icon"></div><span class="event-date">16/04</span><div><span class="pill calc">Cálculo</span><div class="event-label">P1</div></div></div>
+    <div class="event conflict" data-id="sisop-t1"><div class="check-icon"></div><span class="event-date">22/04</span><div><span class="pill sisop">SisOp</span><div class="event-label">T1</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="prob-t2"><div class="check-icon"></div><span class="event-date">22/04</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">T2</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event" data-id="veri-p1"><div class="check-icon"></div><span class="event-date">23/04</span><div><span class="pill veri">VeriVal</span><div class="event-label">P1</div></div></div>
+    <div class="event conflict" data-id="sisop-p1"><div class="check-icon"></div><span class="event-date">29/04</span><div><span class="pill sisop">SisOp</span><div class="event-label">P1</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="prob-p1"><div class="check-icon"></div><span class="event-date">29/04</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">P1</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event" data-id="ux-t12"><div class="check-icon"></div><span class="event-date">30/04</span><div><span class="pill ux">UX/UI</span><div class="event-label">Apres. T1.2</div></div></div>
+  </div>
+
+  <!-- MAIO -->
+  <div class="month-card">
+    <div class="month-title">Maio</div>
+    <div class="event" data-id="ux-ck2"><div class="check-icon"></div><span class="event-date">14/05</span><div><span class="pill ux">UX/UI</span><div class="event-label">Checkpoint T2</div></div></div>
+    <div class="event" data-id="inf-t2"><div class="check-icon"></div><span class="event-date">18/05</span><div><span class="pill inf">Infra</span><div class="event-label">Entrega e Apres. T2</div></div></div>
+    <div class="event" data-id="prob-t3"><div class="check-icon"></div><span class="event-date">20/05</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">T3</div></div></div>
+    <div class="event" data-id="calc-t2"><div class="check-icon"></div><span class="event-date">21/05</span><div><span class="pill calc">Cálculo</span><div class="event-label">T2</div></div></div>
+    <div class="event" data-id="ux-t2"><div class="check-icon"></div><span class="event-date">26/05</span><div><span class="pill ux">UX/UI</span><div class="event-label">Apresentação T2</div></div></div>
+    <div class="event" data-id="calc-p2"><div class="check-icon"></div><span class="event-date">28/05</span><div><span class="pill calc">Cálculo</span><div class="event-label">P2</div></div></div>
+  </div>
+
+  <!-- JUNHO -->
+  <div class="month-card">
+    <div class="month-title">Junho</div>
+    <div class="event" data-id="inf-p1"><div class="check-icon"></div><span class="event-date">01/06</span><div><span class="pill inf">Infra</span><div class="event-label">P1</div></div></div>
+    <div class="event" data-id="prob-t4"><div class="check-icon"></div><span class="event-date">10/06</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">T4</div></div></div>
+    <div class="event" data-id="sisop-t2"><div class="check-icon"></div><span class="event-date">22/06</span><div><span class="pill sisop">SisOp</span><div class="event-label">T2</div></div></div>
+    <div class="event" data-id="calc-t3"><div class="check-icon"></div><span class="event-date">23/06</span><div><span class="pill calc">Cálculo</span><div class="event-label">T3</div></div></div>
+    <div class="event" data-id="prob-p2"><div class="check-icon"></div><span class="event-date">29/06</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">P2</div></div></div>
+    <div class="event conflict" data-id="calc-p3"><div class="check-icon"></div><span class="event-date">30/06</span><div><span class="pill calc">Cálculo</span><div class="event-label">P3</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="ux-t31"><div class="check-icon"></div><span class="event-date">30/06</span><div><span class="pill ux">UX/UI</span><div class="event-label">Apres. T3.1</div></div><span class="conflict-badge">⚠</span></div>
+  </div>
+
+  <!-- JULHO -->
+  <div class="month-card">
+    <div class="month-title">Julho</div>
+    <div class="event conflict" data-id="inf-t3"><div class="check-icon"></div><span class="event-date">01/07</span><div><span class="pill inf">Infra</span><div class="event-label">Entrega e Apres. T3</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="sisop-p2"><div class="check-icon"></div><span class="event-date">01/07</span><div><span class="pill sisop">SisOp</span><div class="event-label">P2</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event" data-id="veri-p2"><div class="check-icon"></div><span class="event-date">02/07</span><div><span class="pill veri">VeriVal</span><div class="event-label">P2</div></div></div>
+    <div class="event" data-id="prob-ps"><div class="check-icon"></div><span class="event-date">06/07</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">PS</div></div></div>
+    <div class="event conflict" data-id="calc-ps"><div class="check-icon"></div><span class="event-date">07/07</span><div><span class="pill calc">Cálculo</span><div class="event-label">PS</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="veri-ps"><div class="check-icon"></div><span class="event-date">07/07</span><div><span class="pill veri">VeriVal</span><div class="event-label">PS</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="inf-ps"><div class="check-icon"></div><span class="event-date">08/07</span><div><span class="pill inf">Infra</span><div class="event-label">PS</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="sisop-ps"><div class="check-icon"></div><span class="event-date">08/07</span><div><span class="pill sisop">SisOp</span><div class="event-label">PS</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event" data-id="ux-t32"><div class="check-icon"></div><span class="event-date">09/07</span><div><span class="pill ux">UX/UI</span><div class="event-label">Apres. T3.2</div></div></div>
+    <div class="event" data-id="veri-tf"><div class="check-icon"></div><span class="event-date">09/07</span><div><span class="pill veri">VeriVal</span><div class="event-label">Entrega TF</div></div></div>
+    <div class="event conflict" data-id="inf-g2"><div class="check-icon"></div><span class="event-date">13/07</span><div><span class="pill inf">Infra</span><div class="event-label">G2</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="sisop-g2"><div class="check-icon"></div><span class="event-date">13/07</span><div><span class="pill sisop">SisOp</span><div class="event-label">G2</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event conflict" data-id="prob-g2"><div class="check-icon"></div><span class="event-date">13/07</span><div><span class="pill prob">Prob/Estat</span><div class="event-label">G2</div></div><span class="conflict-badge">⚠</span></div>
+    <div class="event" data-id="calc-g2"><div class="check-icon"></div><span class="event-date">14/07</span><div><span class="pill calc">Cálculo</span><div class="event-label">G2</div></div></div>
+    <div class="event" data-id="veri-g2"><div class="check-icon"></div><span class="event-date">16/07</span><div><span class="pill veri">VeriVal</span><div class="event-label">G2</div></div></div>
+  </div>
+
+</div>
+
+<script>
+  const KEY = 'cronograma-semestre-2025';
+  const events = document.querySelectorAll('.event[data-id]');
+  const total = events.length;
+
+  function updateProgress() {
+    const done = document.querySelectorAll('.event.done').length;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-label').textContent =
+      done + ' de ' + total + ' concluídos (' + pct + '%)';
+  }
+
+  function save() {
+    const done = [];
+    events.forEach(e => { if (e.classList.contains('done')) done.push(e.dataset.id); });
+    localStorage.setItem(KEY, JSON.stringify(done));
+    updateProgress();
+  }
+
+  function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+      events.forEach(e => { if (saved.includes(e.dataset.id)) e.classList.add('done'); });
+    } catch(err) {}
+    updateProgress();
+  }
+
+  events.forEach(e => {
+    e.addEventListener('click', () => { e.classList.toggle('done'); save(); });
+  });
+
+  load();
+</script>
+</body>
+</html>
